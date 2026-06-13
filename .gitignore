@@ -1,18 +1,14 @@
 # Gradle
 .gradle/
 build/
-!gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.jar
 
 # IDE
 .idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.vscode/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
@@ -21,13 +17,14 @@ Thumbs.db
 # Java
 *.class
 *.jar
-!gradle/wrapper/gradle-wrapper.jar
+!src/**/*.jar
 
-# Minecraft / Loom
+# Minecraft
 run/
 logs/
 *.log
 
 # Misc
-*.bak
-*.tmp
+*.zip
+*.tar.gz
+*.rar
