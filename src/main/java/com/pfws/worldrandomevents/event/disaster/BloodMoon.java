@@ -13,7 +13,7 @@ import java.util.List;
 public class BloodMoon extends BaseEvent {
 
     public BloodMoon() {
-        super("blood_moon", "Blood Moon", EventType.DISASTER);
+        super("blood_moon", "血月", EventType.DISASTER);
     }
 
     @Override public int getBaseTriggerInterval() { return 31; }

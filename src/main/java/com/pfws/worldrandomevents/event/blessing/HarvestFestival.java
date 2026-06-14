@@ -3,6 +3,7 @@ package com.pfws.worldrandomevents.event.blessing;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -21,7 +22,7 @@ public class HarvestFestival extends BaseEvent {
     private final List<HarvestSpirit> spirits = new ArrayList<>();
 
     public HarvestFestival() {
-        super("harvest_festival", "Harvest Festival", EventType.BLESSING);
+        super("harvest_festival", "丰收祭典", EventType.BLESSING);
     }
 
     @Override public int getBaseTriggerInterval() { return 12; }
@@ -99,6 +100,12 @@ public class HarvestFestival extends BaseEvent {
         return count;
     }
 
+    @Override
+    public BlockPos getEventCenter() {
+        if (altars.isEmpty()) return null;
+        return altars.get(0).pos;
+    }
+
     private void spawnAltars(List<ServerPlayer> players) {
         if (players.isEmpty()) return;
         Random random = new Random();
@@ -133,7 +140,8 @@ public class HarvestFestival extends BaseEvent {
     private BlockPos findSurface(int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
-            if (!level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())) {
+            BlockState ground = level.getBlockState(pos);
+            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())) {
                 return pos.above();
             }
         }

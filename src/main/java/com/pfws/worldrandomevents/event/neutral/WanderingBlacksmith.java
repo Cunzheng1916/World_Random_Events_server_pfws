@@ -2,6 +2,7 @@ package com.pfws.worldrandomevents.event.neutral;
 
 import com.pfws.worldrandomevents.event.BaseEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 
@@ -21,7 +23,7 @@ public class WanderingBlacksmith extends BaseEvent {
     private BlacksmithCamp camp;
 
     public WanderingBlacksmith() {
-        super("wandering_blacksmith", "Wandering Blacksmith", EventType.NEUTRAL);
+        super("wandering_blacksmith", "流浪铁匠", EventType.NEUTRAL);
     }
 
     @Override public int getBaseTriggerInterval() { return 10; }
@@ -65,10 +67,17 @@ public class WanderingBlacksmith extends BaseEvent {
         camp.build(level, random);
     }
 
+    @Override
+    public BlockPos getEventCenter() {
+        if (camp == null) return null;
+        return camp.pos;
+    }
+
     private BlockPos findSurface(int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
-            if (!level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())) {
+            BlockState ground = level.getBlockState(pos);
+            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())) {
                 return pos.above();
             }
         }
@@ -95,6 +104,7 @@ public class WanderingBlacksmith extends BaseEvent {
             if (blacksmith != null) {
                 blacksmith.setCustomName(Component.literal("流浪铁匠"));
                 blacksmith.setCustomNameVisible(true);
+                blacksmith.setGlowingTag(true);
                 level.addFreshEntity(blacksmith);
             }
 
@@ -103,6 +113,7 @@ public class WanderingBlacksmith extends BaseEvent {
             if (camel != null) {
                 camel.setCustomName(Component.literal("驮箱骆驼"));
                 camel.setCustomNameVisible(true);
+                camel.setGlowingTag(true);
                 level.addFreshEntity(camel);
             }
 
@@ -110,6 +121,7 @@ public class WanderingBlacksmith extends BaseEvent {
                 EntitySpawnReason.EVENT, false, false);
             if (golem != null) {
                 golem.setCustomName(Component.literal("铁匠卫士"));
+                golem.setGlowingTag(true);
                 level.addFreshEntity(golem);
             }
         }

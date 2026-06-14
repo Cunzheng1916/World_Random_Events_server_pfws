@@ -3,13 +3,18 @@ package com.pfws.worldrandomevents.event.disaster;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.AmethystClusterBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 import java.util.Collections;
@@ -20,7 +25,7 @@ public class LeylineDisturbance extends BaseEvent {
     private int stabilizedCount = 0;
 
     public LeylineDisturbance() {
-        super("leyline_disturbance", "Leyline Disturbance", EventType.DISASTER);
+        super("leyline_disturbance", "地脉紊乱", EventType.DISASTER);
     }
 
     @Override public int getBaseTriggerInterval() { return 7; }
@@ -95,7 +100,8 @@ public class LeylineDisturbance extends BaseEvent {
     private BlockPos findGroundPos(int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
-            if (!level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())) {
+            BlockState ground = level.getBlockState(pos);
+            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())) {
                 return pos.above();
             }
         }
@@ -106,13 +112,19 @@ public class LeylineDisturbance extends BaseEvent {
         if (node.isStabilized()) {
             player.addEffect(new MobEffectInstance(MobEffects.LUCK, 12000, 0, false, true, true));
         } else {
-            Holder<MobEffect>[] debuffs = new Holder[]{MobEffects.WEAKNESS, MobEffects.MINING_FATIGUE,
-                MobEffects.HUNGER, MobEffects.POISON};
-            player.addEffect(new MobEffectInstance(debuffs[new Random().nextInt(debuffs.length)], 300, 0, false, true, true));
+            List<Holder<MobEffect>> debuffs = List.of(MobEffects.WEAKNESS, MobEffects.MINING_FATIGUE,
+                MobEffects.HUNGER, MobEffects.POISON);
+            player.addEffect(new MobEffectInstance(debuffs.get(new Random().nextInt(debuffs.size())), 300, 0, false, true, true));
         }
     }
 
     public List<LeylineNode> getNodes() { return Collections.unmodifiableList(nodes); }
+
+    @Override
+    public BlockPos getEventCenter() {
+        if (nodes.isEmpty()) return null;
+        return new BlockPos(nodes.get(0).x, nodes.get(0).y, nodes.get(0).z);
+    }
 
     public void stabilizeNode(BlockPos pos) {
         for (LeylineNode node : nodes) {
@@ -134,6 +146,7 @@ public class LeylineDisturbance extends BaseEvent {
         public final int x, y, z;
         private boolean active = true;
         private boolean stabilized = false;
+        private ArmorStand marker;
 
         LeylineNode(BlockPos pos) { this.x = pos.getX(); this.y = pos.getY(); this.z = pos.getZ(); }
 
@@ -143,6 +156,14 @@ public class LeylineDisturbance extends BaseEvent {
         void build(net.minecraft.server.level.ServerLevel level) {
             BlockPos pos = new BlockPos(x, y, z);
             level.setBlock(pos, Blocks.AMETHYST_BLOCK.defaultBlockState(), 3);
+            marker = EntityType.ARMOR_STAND.create(level, null, pos, EntitySpawnReason.EVENT, false, false);
+            if (marker != null) {
+                marker.setInvisible(true);
+                marker.setNoGravity(true);
+                marker.setInvulnerable(true);
+                marker.setGlowingTag(true);
+                level.addFreshEntity(marker);
+            }
         }
 
         void stabilize(net.minecraft.server.level.ServerLevel level) {
@@ -155,6 +176,10 @@ public class LeylineDisturbance extends BaseEvent {
             BlockPos pos = new BlockPos(x, y, z);
             if (!level.isEmptyBlock(pos)) {
                 level.destroyBlock(pos, true, null);
+            }
+            if (marker != null && marker.isAlive()) {
+                marker.discard();
+                marker = null;
             }
         }
     }

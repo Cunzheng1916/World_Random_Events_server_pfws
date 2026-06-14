@@ -3,6 +3,7 @@ package com.pfws.worldrandomevents.event.blessing;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -10,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.item.ItemEntity;
 
 import java.util.*;
@@ -18,7 +20,7 @@ public class MeteorShower extends BaseEvent {
     private int tickCounter = 0;
 
     public MeteorShower() {
-        super("meteor_shower", "Meteor Shower", EventType.BLESSING);
+        super("meteor_shower", "流星雨", EventType.BLESSING);
     }
 
     @Override public int getBaseTriggerInterval() { return 5; }
@@ -109,7 +111,8 @@ public class MeteorShower extends BaseEvent {
     private BlockPos findSurface(net.minecraft.server.level.ServerLevel level, int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
-            if (!level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())) {
+            BlockState ground = level.getBlockState(pos);
+            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())) {
                 return pos.above();
             }
         }

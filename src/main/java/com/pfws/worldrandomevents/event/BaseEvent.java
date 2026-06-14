@@ -2,8 +2,12 @@ package com.pfws.worldrandomevents.event;
 
 import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.network.NetworkHandler;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 
 import java.util.List;
 
@@ -15,7 +19,9 @@ public abstract class BaseEvent {
     protected boolean isActive = false;
     protected int ticksSinceStart = 0;
     protected int remainingTicks = 0;
+    protected int totalDurationTicks = 0;
     protected int cooldownTicks = 0;
+    protected ServerBossEvent bossBar = null;
 
     public enum EventType {
         DISASTER(3),
@@ -37,6 +43,7 @@ public abstract class BaseEvent {
     public EventType getEventType() { return eventType; }
     public boolean isActive() { return isActive; }
     public int getCooldownTicks() { return cooldownTicks; }
+    public ServerBossEvent getBossBar() { return bossBar; }
 
     public void setLevel(ServerLevel level) { this.level = level; }
 
@@ -53,15 +60,27 @@ public abstract class BaseEvent {
     public abstract int getBaseCooldownTicks();
     public abstract int getBaseForceTriggerDays();
 
+    public BlockPos getEventCenter() { return null; }
+
     public void start(ServerLevel serverLevel, List<ServerPlayer> players) {
         this.level = serverLevel;
         this.isActive = true;
         this.ticksSinceStart = 0;
-        this.remainingTicks = getBaseDurationTicks();
+        this.totalDurationTicks = getBaseDurationTicks();
+        this.remainingTicks = totalDurationTicks;
 
         WorldRandomEvents.LOGGER.info("[WorldRandomEvents] Event started: {} ({})", displayName, id);
 
+        BossEvent.BossBarColor color = switch (eventType) {
+            case DISASTER -> BossEvent.BossBarColor.RED;
+            case NEUTRAL  -> BossEvent.BossBarColor.BLUE;
+            case BLESSING -> BossEvent.BossBarColor.GREEN;
+        };
+        bossBar = new ServerBossEvent(java.util.UUID.randomUUID(), Component.literal(displayName), color, BossEvent.BossBarOverlay.PROGRESS);
+        bossBar.setVisible(true);
+
         for (ServerPlayer player : players) {
+            bossBar.addPlayer(player);
             NetworkHandler.sendEventStart(player, id, remainingTicks);
             NetworkHandler.sendTitleMessage(player,
                 getStartTitle(),
@@ -70,6 +89,14 @@ public abstract class BaseEvent {
         }
 
         onStart(players);
+
+        String coordMsg = "";
+        BlockPos center = getEventCenter();
+        if (center != null) {
+            coordMsg = " §7@(" + center.getX() + ", " + center.getY() + ", " + center.getZ() + ")";
+        }
+        serverLevel.getServer().getPlayerList().broadcastSystemMessage(
+            Component.literal("§6[世界事件] §e" + displayName + " §a已开始!" + coordMsg), false);
     }
 
     public void tick(ServerLevel serverLevel, List<ServerPlayer> players) {
@@ -78,9 +105,13 @@ public abstract class BaseEvent {
         ticksSinceStart++;
         remainingTicks--;
 
+        if (bossBar != null && remainingTicks > 0 && totalDurationTicks > 0) {
+            bossBar.setProgress((float) remainingTicks / (float) totalDurationTicks);
+        }
+
         onTick(players);
 
-        if (remainingTicks <= 0) {
+        if (totalDurationTicks > 0 && remainingTicks <= 0) {
             end(players);
         }
     }
@@ -88,9 +119,24 @@ public abstract class BaseEvent {
     public void end(List<ServerPlayer> players) {
         WorldRandomEvents.LOGGER.info("[WorldRandomEvents] Event ended: {} ({})", displayName, id);
 
+        String coordMsg = "";
+        BlockPos center = getEventCenter();
+        if (center != null) {
+            coordMsg = " §7@(" + center.getX() + ", " + center.getY() + ", " + center.getZ() + ")";
+        }
+        level.getServer().getPlayerList().broadcastSystemMessage(
+            Component.literal("§6[世界事件] §e" + displayName + " §c已结束!" + coordMsg), false);
+
         for (ServerPlayer player : players) {
+            if (bossBar != null) bossBar.removePlayer(player);
             NetworkHandler.sendEventEnd(player, id);
             NetworkHandler.sendSkyEffect(player, 0, 0);
+        }
+
+        if (bossBar != null) {
+            bossBar.removeAllPlayers();
+            bossBar.setVisible(false);
+            bossBar = null;
         }
 
         onEnd(players);

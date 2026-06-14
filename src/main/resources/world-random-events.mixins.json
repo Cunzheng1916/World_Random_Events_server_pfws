@@ -5,7 +5,10 @@
     "mixins": [
         "ServerLevelMixin",
         "SleepStatusMixin",
-        "LivingEntityMixin"
+        "LivingEntityMixin",
+        "SnowballMixin",
+        "MobMixin",
+        "CaravanGuardAiMixin"
     ],
     "injectors": {
         "defaultRequire": 1

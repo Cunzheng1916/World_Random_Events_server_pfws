@@ -77,6 +77,13 @@ public class EventCommands {
                         if (current != null && current.isActive()) {
                             sb.append("\n§6当前事件: §c").append(current.getDisplayName());
                         }
+                        var queue = WorldRandomEvents.EVENT_MANAGER.getQueuedEvents();
+                        if (!queue.isEmpty()) {
+                            sb.append("\n§6排队中: ");
+                            for (BaseEvent q : queue) {
+                                sb.append("§e").append(q.getDisplayName()).append(" ");
+                            }
+                        }
                         String msg = sb.toString();
                         ctx.getSource().sendSuccess(() -> Component.literal(msg), false);
                         return 1;

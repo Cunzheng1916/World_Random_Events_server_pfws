@@ -6,7 +6,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.block.Blocks;
 
@@ -17,7 +20,7 @@ public class SoulStorm extends BaseEvent {
     private int tickCounter = 0;
 
     public SoulStorm() {
-        super("soul_storm", "Soul Storm", EventType.DISASTER);
+        super("soul_storm", "灵魂风暴", EventType.DISASTER);
     }
 
     @Override public int getBaseTriggerInterval() { return 8; }
@@ -67,6 +70,7 @@ public class SoulStorm extends BaseEvent {
         }
         soulCages.clear();
         for (ServerPlayer player : players) {
+            player.removeEffect(MobEffects.WEAKNESS);
             NetworkHandler.sendSkyEffect(player, 0, 0);
         }
     }
@@ -90,10 +94,17 @@ public class SoulStorm extends BaseEvent {
 
     public Map<String, SoulCage> getSoulCages() { return soulCages; }
 
+    @Override
+    public BlockPos getEventCenter() {
+        if (soulCages.isEmpty()) return null;
+        return soulCages.values().iterator().next().pos;
+    }
+
     public static class SoulCage {
         public final BlockPos pos;
         public final ServerPlayer deadPlayer;
         public final long createdAt;
+        private ArmorStand marker;
 
         public SoulCage(BlockPos pos, ServerPlayer deadPlayer) {
             this.pos = pos;
@@ -109,6 +120,14 @@ public class SoulStorm extends BaseEvent {
             level.setBlock(pos.south(), Blocks.IRON_BARS.defaultBlockState(), 3);
             level.setBlock(pos.east(), Blocks.IRON_BARS.defaultBlockState(), 3);
             level.setBlock(pos.west(), Blocks.IRON_BARS.defaultBlockState(), 3);
+            marker = EntityType.ARMOR_STAND.create(level, null, pos.above(2), EntitySpawnReason.EVENT, false, false);
+            if (marker != null) {
+                marker.setInvisible(true);
+                marker.setNoGravity(true);
+                marker.setInvulnerable(true);
+                marker.setGlowingTag(true);
+                level.addFreshEntity(marker);
+            }
         }
 
         public void destroy(net.minecraft.server.level.ServerLevel level) {
@@ -119,6 +138,10 @@ public class SoulStorm extends BaseEvent {
             level.destroyBlock(pos.south(), false, null);
             level.destroyBlock(pos.east(), false, null);
             level.destroyBlock(pos.west(), false, null);
+            if (marker != null && marker.isAlive()) {
+                marker.discard();
+                marker = null;
+            }
         }
 
         public boolean isExpired() {

@@ -3,17 +3,26 @@ package com.pfws.worldrandomevents.mixin;
 import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.event.disaster.BloodMoon;
+import com.pfws.worldrandomevents.event.disaster.PiglinInvasion;
 import com.pfws.worldrandomevents.event.disaster.SoulStorm;
+import com.pfws.worldrandomevents.event.neutral.CaravanExpedition;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.animal.golem.SnowGolem;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.wanderingtrader.WanderingTrader;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -36,6 +45,73 @@ public abstract class LivingEntityMixin {
                         self.getX(), self.getY(), self.getZ(),
                         new ItemStack(Items.GOLD_INGOT));
                     level.addFreshEntity(goldDrop);
+                }
+            }
+        }
+
+        if (current instanceof CaravanExpedition caravan && caravan.isActive()) {
+            if (caravan.isCaravanGuard(self)) {
+                Random random = new Random();
+                int diamonds = 7 + random.nextInt(10);
+                int ironBlocks = 19 + random.nextInt(7);
+                int expBottles = 30 + random.nextInt(21);
+                int netheriteScraps = 1 + random.nextInt(2);
+
+                spawnDrop(level, self, new ItemStack(Items.DIAMOND, diamonds));
+                spawnDrop(level, self, new ItemStack(Items.IRON_BLOCK, ironBlocks));
+                spawnDrop(level, self, new ItemStack(Items.EXPERIENCE_BOTTLE, expBottles));
+                spawnDrop(level, self, new ItemStack(Items.NETHERITE_SCRAP, netheriteScraps));
+            }
+        }
+
+        if (current instanceof PiglinInvasion pi && pi.isActive() && pi.isInvasionMob(self)) {
+            Random random = new Random();
+            int goldBlocks = 3 + random.nextInt(6);
+            int diamonds = 2 + random.nextInt(4);
+            int expBottles = 10 + random.nextInt(11);
+
+            spawnDrop(level, self, new ItemStack(Items.GOLD_BLOCK, goldBlocks));
+            spawnDrop(level, self, new ItemStack(Items.DIAMOND, diamonds));
+            spawnDrop(level, self, new ItemStack(Items.EXPERIENCE_BOTTLE, expBottles));
+
+            if (random.nextFloat() < 0.08f) {
+                spawnDrop(level, self, new ItemStack(Items.NETHERITE_SCRAP, 1));
+            }
+        }
+    }
+
+    @ModifyVariable(method = "hurtServer", at = @At("HEAD"), argsOnly = true)
+    private float modifyHurtAmount(float amount, ServerLevel level, DamageSource source, float originalAmount) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        if (level.isClientSide()) return amount;
+
+        BaseEvent current = WorldRandomEvents.EVENT_MANAGER.getCurrentEvent();
+        if (current instanceof PiglinInvasion pi && pi.isActive() && pi.isInvasionMob(self)) {
+            ItemStack chest = self.getItemBySlot(EquipmentSlot.CHEST);
+            if (chest.is(Items.NETHERITE_CHESTPLATE) || chest.is(Items.DIAMOND_CHESTPLATE)) {
+                return amount * 0.9f;
+            } else {
+                return amount * 1.4f;
+            }
+        }
+
+        return amount;
+    }
+
+    @Inject(method = "hurtServer", at = @At("RETURN"))
+    private void afterHurt(ServerLevel level, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        if (level.isClientSide()) return;
+        if (!cir.getReturnValue()) return;
+
+        BaseEvent current = WorldRandomEvents.EVENT_MANAGER.getCurrentEvent();
+        if (current instanceof CaravanExpedition caravan && caravan.isActive()) {
+            Entity attacker = source.getEntity();
+            if (attacker instanceof Player player) {
+                if (self instanceof WanderingTrader && caravan.isCaravanTrader(self)) {
+                    caravan.aggroGuardsOnPlayer(player);
+                } else if (caravan.isCaravanGuard(self)) {
+                    caravan.aggroGuardsOnPlayer(player);
                 }
             }
         }
@@ -69,5 +145,11 @@ public abstract class LivingEntityMixin {
         if (current instanceof SoulStorm storm && storm.isActive()) {
             storm.createSoulCage(player.blockPosition(), player);
         }
+    }
+
+    private static void spawnDrop(ServerLevel level, LivingEntity entity, ItemStack stack) {
+        ItemEntity drop = new ItemEntity(level,
+            entity.getX(), entity.getY(), entity.getZ(), stack);
+        level.addFreshEntity(drop);
     }
 }

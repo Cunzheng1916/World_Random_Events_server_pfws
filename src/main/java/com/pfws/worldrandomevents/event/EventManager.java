@@ -28,6 +28,8 @@ public class EventManager {
     private final Map<String, Integer> daysSinceLastCheck = new HashMap<>();
     private long lastDayCheck = -1;
     private BaseEvent currentEvent = null;
+    private final LinkedList<BaseEvent> eventQueue = new LinkedList<>();
+    private MinecraftServer server = null;
     private final Random random = new Random();
 
     public void registerAllEvents() {
@@ -41,6 +43,7 @@ public class EventManager {
         register(new WanderingBlacksmith());
         register(new MysteriousObelisk());
 
+        ServerLifecycleEvents.SERVER_STARTING.register(s -> server = s);
         ServerTickEvents.END_SERVER_TICK.register(this::onServerTick);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
     }
@@ -68,6 +71,10 @@ public class EventManager {
         return Collections.unmodifiableCollection(allEvents);
     }
 
+    public List<BaseEvent> getQueuedEvents() {
+        return Collections.unmodifiableList(eventQueue);
+    }
+
     private void onServerTick(MinecraftServer server) {
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) return;
@@ -83,9 +90,16 @@ public class EventManager {
             currentEvent.tick(overworld, players);
             if (!currentEvent.isActive()) {
                 currentEvent = null;
+                startNextQueuedEvent(overworld, players);
             }
             return;
         }
+
+        if (currentEvent == null) {
+            startNextQueuedEvent(overworld, players);
+        }
+
+        if (currentEvent != null && currentEvent.isActive()) return;
 
         long currentDay = overworld.getOverworldClockTime() / 24000L;
         if (lastDayCheck < 0) {
@@ -151,14 +165,37 @@ public class EventManager {
 
             if (!candidates.isEmpty()) {
                 BaseEvent selected = candidates.get(random.nextInt(candidates.size()));
-                selected.start(overworld, players);
-                currentEvent = selected;
                 daysSinceLastTrigger.put(selected.getId(), 0);
 
                 for (String id : daysSinceLastCheck.keySet()) {
                     daysSinceLastCheck.put(id, 0);
                 }
+
+                if (currentEvent != null && currentEvent.isActive()) {
+                    eventQueue.add(selected);
+                    overworld.getServer().getPlayerList().broadcastSystemMessage(
+                        net.minecraft.network.chat.Component.literal(
+                            "§6[世界事件] §e" + selected.getDisplayName() + " §7已加入排队，将在当前事件结束后触发"), false);
+                } else {
+                    selected.start(overworld, players);
+                    currentEvent = selected;
+                }
                 return;
+            }
+        }
+    }
+
+    private void startNextQueuedEvent(ServerLevel overworld, List<ServerPlayer> players) {
+        if (!eventQueue.isEmpty()) {
+            BaseEvent next = eventQueue.poll();
+            if (next.canTrigger()) {
+                next.start(overworld, players);
+                currentEvent = next;
+                overworld.getServer().getPlayerList().broadcastSystemMessage(
+                    net.minecraft.network.chat.Component.literal(
+                        "§6[世界事件] §e" + next.getDisplayName() + " §a从排队中开始触发!"), false);
+            } else {
+                startNextQueuedEvent(overworld, players);
             }
         }
     }
@@ -168,17 +205,26 @@ public class EventManager {
             currentEvent.forceEnd();
             currentEvent = null;
         }
+        eventQueue.clear();
     }
 
     public void forceStartEvent(String eventId) {
         BaseEvent event = eventMap.get(eventId);
         if (event == null) return;
         if (event.isActive()) return;
-        MinecraftServer server = (MinecraftServer) net.fabricmc.loader.api.FabricLoader.getInstance().getGameInstance();
+        if (server == null) return;
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) return;
-        event.forceStart(overworld);
-        currentEvent = event;
+
+        if (currentEvent != null && currentEvent.isActive()) {
+            eventQueue.add(event);
+            overworld.getServer().getPlayerList().broadcastSystemMessage(
+                net.minecraft.network.chat.Component.literal(
+                    "§6[世界事件] §e" + event.getDisplayName() + " §7已加入排队，将在当前事件结束后触发"), false);
+        } else {
+            event.forceStart(overworld);
+            currentEvent = event;
+        }
         daysSinceLastTrigger.put(eventId, 0);
     }
 

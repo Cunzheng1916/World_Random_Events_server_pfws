@@ -2,12 +2,17 @@ package com.pfws.worldrandomevents.event.neutral;
 
 import com.pfws.worldrandomevents.event.BaseEvent;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.item.ItemEntity;
 
 import java.util.*;
@@ -25,7 +30,7 @@ public class MysteriousObelisk extends BaseEvent {
     }
 
     public MysteriousObelisk() {
-        super("mysterious_obelisk", "Mysterious Obelisk", EventType.NEUTRAL);
+        super("mysterious_obelisk", "神秘方尖碑", EventType.NEUTRAL);
     }
 
     @Override public int getBaseTriggerInterval() { return 15; }
@@ -66,7 +71,10 @@ public class MysteriousObelisk extends BaseEvent {
     }
 
     private void spawnObelisk(List<ServerPlayer> players) {
-        if (players.isEmpty()) return;
+        if (players.isEmpty()) {
+            abortEvent();
+            return;
+        }
         Random random = new Random();
         ServerPlayer target = players.get(random.nextInt(players.size()));
         double angle = random.nextDouble() * Math.PI * 2;
@@ -74,10 +82,19 @@ public class MysteriousObelisk extends BaseEvent {
         int x = (int) (target.getX() + Math.cos(angle) * dist);
         int z = (int) (target.getZ() + Math.sin(angle) * dist);
         BlockPos ground = findSurface(x, z);
-        if (ground == null) return;
+        if (ground == null) {
+            abortEvent();
+            return;
+        }
 
         obelisk = new Obelisk(ground);
         obelisk.build(level);
+    }
+
+    /** 安全终止事件：设置短暂持续时间让下一tick触发end() */
+    private void abortEvent() {
+        totalDurationTicks = 1;
+        remainingTicks = 0;
     }
 
     public boolean activateObelisk(BlockPos pos, ServerPlayer player, ItemStack offering) {
@@ -87,10 +104,17 @@ public class MysteriousObelisk extends BaseEvent {
 
     public Obelisk getObelisk() { return obelisk; }
 
+    @Override
+    public BlockPos getEventCenter() {
+        if (obelisk == null) return null;
+        return obelisk.getBase();
+    }
+
     private BlockPos findSurface(int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
-            if (!level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())) {
+            BlockState ground = level.getBlockState(pos);
+            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())) {
                 return pos.above();
             }
         }
@@ -101,6 +125,7 @@ public class MysteriousObelisk extends BaseEvent {
         private final BlockPos base;
         private ObeliskState state = ObeliskState.DORMANT;
         private boolean active = true;
+        private ArmorStand marker;
 
         public Obelisk(BlockPos base) { this.base = base; }
 
@@ -118,6 +143,14 @@ public class MysteriousObelisk extends BaseEvent {
             level.setBlock(base.south(), Blocks.BLACKSTONE.defaultBlockState(), 3);
             level.setBlock(base.east(), Blocks.BLACKSTONE.defaultBlockState(), 3);
             level.setBlock(base.west(), Blocks.BLACKSTONE.defaultBlockState(), 3);
+            marker = EntityType.ARMOR_STAND.create(level, null, base.above(), EntitySpawnReason.EVENT, false, false);
+            if (marker != null) {
+                marker.setInvisible(true);
+                marker.setNoGravity(true);
+                marker.setInvulnerable(true);
+                marker.setGlowingTag(true);
+                level.addFreshEntity(marker);
+            }
         }
 
         boolean activate(net.minecraft.server.level.ServerLevel level, ServerPlayer player, ItemStack offering) {
@@ -170,6 +203,10 @@ public class MysteriousObelisk extends BaseEvent {
             level.destroyBlock(base.south(), true, null);
             level.destroyBlock(base.east(), true, null);
             level.destroyBlock(base.west(), true, null);
+            if (marker != null && marker.isAlive()) {
+                marker.discard();
+                marker = null;
+            }
             active = false;
         }
     }
