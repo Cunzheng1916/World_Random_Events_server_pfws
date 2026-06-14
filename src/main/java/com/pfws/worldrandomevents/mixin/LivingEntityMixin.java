@@ -49,7 +49,9 @@ public abstract class LivingEntityMixin {
             }
         }
 
-        if (current instanceof CaravanExpedition caravan && caravan.isActive()) {
+        // 使用 ACTIVE_INSTANCE 静态引用，确保在事件结束清理期间也能正确掉落
+        CaravanExpedition caravan = CaravanExpedition.ACTIVE_INSTANCE;
+        if (caravan != null && caravan.isActive()) {
             if (caravan.isCaravanGuard(self)) {
                 Random random = new Random();
                 int diamonds = 7 + random.nextInt(10);

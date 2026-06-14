@@ -241,8 +241,8 @@ public class CaravanExpedition extends BaseEvent {
                     golem.addEffect(new MobEffectInstance(MobEffects.REGENERATION, -1, 0,
                         false, true, true));
                     Objects.requireNonNull(golem.getAttribute(Attributes.MAX_HEALTH))
-                        .setBaseValue(400);
-                    golem.setHealth(400);
+                        .setBaseValue(450);
+                    golem.setHealth(450);
                     level.addFreshEntity(golem);
                     golem.setGlowingTag(true);
                     meleeGuards.add(golem);
@@ -262,8 +262,8 @@ public class CaravanExpedition extends BaseEvent {
                     snowman.addEffect(new MobEffectInstance(MobEffects.STRENGTH, -1, 5,
                         false, true, true));
                     Objects.requireNonNull(snowman.getAttribute(Attributes.MAX_HEALTH))
-                        .setBaseValue(180);
-                    snowman.setHealth(180);
+                        .setBaseValue(240);
+                    snowman.setHealth(240);
                     level.addFreshEntity(snowman);
                     snowman.setGlowingTag(true);
                     rangedGuards.add(snowman);
@@ -384,97 +384,121 @@ public class CaravanExpedition extends BaseEvent {
                                              Random random) {
             trader.getOffers().clear();
 
-            int tradeCount = 8 + random.nextInt(6);
+            final int TOTAL_CAP = 11;
 
-            for (int i = 0; i < tradeCount; i++) {
-                int tradeType = random.nextInt(100);
-                Item costItem;
-                int costCount;
-                ItemStack result;
+            // 1. 附魔钻石装备: 1~3 个交易, 1~2 种装备类型
+            int diamondCount = 1 + random.nextInt(3);
+            int diamondTypeCount = Math.min(diamondCount, 1 + random.nextInt(2));
+            Item[] diamondPool = {Items.DIAMOND_HELMET, Items.DIAMOND_CHESTPLATE,
+                Items.DIAMOND_LEGGINGS, Items.DIAMOND_BOOTS};
+            shuffleArray(diamondPool, random);
 
-                if (tradeType < 18) {
-                    result = createEnchantedArmor(Items.DIAMOND_HELMET, level, random);
-                    costItem = Items.EMERALD_BLOCK;
-                    costCount = 2 + random.nextInt(5);
-                } else if (tradeType < 36) {
-                    result = createEnchantedArmor(Items.DIAMOND_CHESTPLATE, level, random);
-                    costItem = Items.EMERALD_BLOCK;
-                    costCount = 3 + random.nextInt(7);
-                } else if (tradeType < 50) {
-                    result = createEnchantedArmor(Items.DIAMOND_LEGGINGS, level, random);
-                    costItem = Items.EMERALD_BLOCK;
-                    costCount = 2 + random.nextInt(6);
-                } else if (tradeType < 64) {
-                    result = createEnchantedArmor(Items.DIAMOND_BOOTS, level, random);
-                    costItem = Items.EMERALD_BLOCK;
-                    costCount = 2 + random.nextInt(4);
-                } else if (tradeType < 72) {
-                    result = createEnchantedArmor(Items.IRON_HELMET, level, random);
-                    costItem = Items.EMERALD;
-                    costCount = 4 + random.nextInt(12);
-                } else if (tradeType < 80) {
-                    result = createEnchantedArmor(Items.IRON_CHESTPLATE, level, random);
-                    costItem = Items.EMERALD;
-                    costCount = 6 + random.nextInt(16);
-                } else if (tradeType < 83) {
-                    result = createEnchantedArmor(Items.NETHERITE_CHESTPLATE, level, random);
-                    costItem = Items.NETHER_STAR;
-                    costCount = 1 + random.nextInt(3);
-                } else if (tradeType < 85) {
-                    result = createEnchantedSword(Items.NETHERITE_SWORD, level, random);
-                    costItem = Items.NETHER_STAR;
-                    costCount = 1 + random.nextInt(2);
-                } else if (tradeType < 90) {
-                    result = new ItemStack(Items.SLIME_BLOCK, 2 + random.nextInt(5));
-                    costItem = Items.EMERALD;
-                    costCount = 2 + random.nextInt(6);
-                } else if (tradeType < 95) {
-                    result = new ItemStack(Items.HONEY_BLOCK, 2 + random.nextInt(5));
-                    costItem = Items.EMERALD;
-                    costCount = 2 + random.nextInt(6);
-                } else if (tradeType < 97) {
-                    result = new ItemStack(Items.DIAMOND_BLOCK, 1 + random.nextInt(3));
-                    costItem = Items.NETHERITE_SCRAP;
-                    costCount = 2 + random.nextInt(4);
-                } else {
-                    result = new ItemStack(Items.AMETHYST_SHARD, 8 + random.nextInt(17));
-                    costItem = Items.EMERALD;
-                    costCount = 1 + random.nextInt(4);
+            int added = 0;
+            for (int t = 0; t < diamondTypeCount && added < diamondCount; t++) {
+                int remaining = diamondCount - added;
+                int remainingTypes = diamondTypeCount - t;
+                int count = (t == diamondTypeCount - 1) ? remaining
+                    : 1 + random.nextInt(Math.max(1, remaining - remainingTypes + 1));
+                for (int i = 0; i < count; i++) {
+                    ItemStack result = createEnchantedArmor(diamondPool[t], level, random);
+                    MerchantOffer offer = new MerchantOffer(
+                        new ItemCost(Items.EMERALD_BLOCK, 2 + random.nextInt(8)),
+                        result, 2 + random.nextInt(7), 5 + random.nextInt(15), 0.05f);
+                    trader.getOffers().add(offer);
                 }
+                added += count;
+            }
 
-                ItemCost cost = new ItemCost(costItem, costCount);
-                int maxUses = costItem == Items.NETHER_STAR ? 1 + random.nextInt(2)
-                    : 2 + random.nextInt(7);
-                MerchantOffer offer = new MerchantOffer(cost, result, maxUses,
-                    5 + random.nextInt(15), 0.05f);
+            // 2. 附魔铁装备: 4~6 个交易, 1~3 种装备类型
+            int ironCount = Math.min(4 + random.nextInt(3), TOTAL_CAP - trader.getOffers().size());
+            int ironTypeCount = Math.min(ironCount, 1 + random.nextInt(3));
+            Item[] ironPool = {Items.IRON_HELMET, Items.IRON_CHESTPLATE,
+                Items.IRON_LEGGINGS, Items.IRON_BOOTS};
+            shuffleArray(ironPool, random);
+
+            added = 0;
+            for (int t = 0; t < ironTypeCount && added < ironCount
+                && trader.getOffers().size() < TOTAL_CAP; t++) {
+                int remaining = ironCount - added;
+                int remainingTypes = ironTypeCount - t;
+                int count = (t == ironTypeCount - 1) ? remaining
+                    : 1 + random.nextInt(Math.max(1, remaining - remainingTypes + 1));
+                count = Math.min(count, TOTAL_CAP - trader.getOffers().size());
+                for (int i = 0; i < count; i++) {
+                    ItemStack result = createEnchantedArmor(ironPool[t], level, random);
+                    MerchantOffer offer = new MerchantOffer(
+                        new ItemCost(Items.EMERALD, 4 + random.nextInt(20)),
+                        result, 2 + random.nextInt(7), 5 + random.nextInt(15), 0.05f);
+                    trader.getOffers().add(offer);
+                }
+                added += count;
+            }
+
+            // 3. 下界合金装备: 5% 概率，无附魔，需下界之星+钻石块兑换
+            int slotsBeforeMisc = TOTAL_CAP - trader.getOffers().size();
+            if (slotsBeforeMisc > 0 && random.nextFloat() < 0.05f) {
+                Item netheriteItem = random.nextBoolean()
+                    ? Items.NETHERITE_CHESTPLATE : Items.NETHERITE_SWORD;
+                ItemStack result = new ItemStack(netheriteItem);
+                MerchantOffer offer = new MerchantOffer(
+                    new ItemCost(Items.NETHER_STAR, 1 + random.nextInt(3)),
+                    java.util.Optional.of(new ItemCost(Items.DIAMOND_BLOCK, 5 + random.nextInt(5))),
+                    result, 1 + random.nextInt(2), 5 + random.nextInt(15), 0.05f);
                 trader.getOffers().add(offer);
             }
 
-            if (random.nextFloat() < 0.4f) {
-                ItemStack seedResult = switch (random.nextInt(4)) {
-                    case 0 -> new ItemStack(Items.WHEAT_SEEDS, 4 + random.nextInt(9));
-                    case 1 -> new ItemStack(Items.BEETROOT_SEEDS, 4 + random.nextInt(9));
-                    case 2 -> new ItemStack(Items.PUMPKIN_SEEDS, 2 + random.nextInt(5));
-                    default -> new ItemStack(Items.MELON_SEEDS, 2 + random.nextInt(5));
-                };
-                trader.getOffers().add(new MerchantOffer(
-                    new ItemCost(Items.EMERALD, 1 + random.nextInt(3)),
-                    seedResult, 8, 2, 0.05f));
-            }
+            // 4. 杂物: 种子/树苗/史莱姆/蜂蜜/紫水晶/钻石块 等，填充至 11 上限
+            int miscSlots = TOTAL_CAP - trader.getOffers().size();
+            int miscTarget = 5 + random.nextInt(4); // 5~8
+            int miscCount = Math.min(miscTarget, miscSlots);
 
-            if (random.nextFloat() < 0.4f) {
-                Item saplingItem = switch (random.nextInt(6)) {
-                    case 0 -> Items.OAK_SAPLING;
-                    case 1 -> Items.SPRUCE_SAPLING;
-                    case 2 -> Items.BIRCH_SAPLING;
-                    case 3 -> Items.JUNGLE_SAPLING;
-                    case 4 -> Items.ACACIA_SAPLING;
-                    default -> Items.DARK_OAK_SAPLING;
-                };
-                trader.getOffers().add(new MerchantOffer(
-                    new ItemCost(Items.EMERALD, 1 + random.nextInt(2)),
-                    new ItemStack(saplingItem, 2 + random.nextInt(5)),
-                    6, 2, 0.05f));
+            Item[] miscPool = {
+                Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS, Items.PUMPKIN_SEEDS,
+                Items.MELON_SEEDS, Items.OAK_SAPLING, Items.SPRUCE_SAPLING,
+                Items.BIRCH_SAPLING, Items.JUNGLE_SAPLING, Items.ACACIA_SAPLING,
+                Items.DARK_OAK_SAPLING, Items.SLIME_BLOCK, Items.HONEY_BLOCK,
+                Items.AMETHYST_SHARD, Items.DIAMOND_BLOCK
+            };
+            shuffleArray(miscPool, random);
+
+            for (int i = 0; i < miscCount && i < miscPool.length; i++) {
+                Item item = miscPool[i];
+                ItemStack result;
+                ItemCost cost;
+
+                if (item == Items.DIAMOND_BLOCK) {
+                    result = new ItemStack(Items.DIAMOND_BLOCK, 1 + random.nextInt(3));
+                    cost = new ItemCost(Items.NETHERITE_SCRAP, 2 + random.nextInt(4));
+                } else if (item == Items.SLIME_BLOCK || item == Items.HONEY_BLOCK) {
+                    result = new ItemStack(item, 2 + random.nextInt(5));
+                    cost = new ItemCost(Items.EMERALD, 2 + random.nextInt(6));
+                } else if (item == Items.AMETHYST_SHARD) {
+                    result = new ItemStack(Items.AMETHYST_SHARD, 8 + random.nextInt(17));
+                    cost = new ItemCost(Items.EMERALD, 1 + random.nextInt(4));
+                } else if (item.toString().contains("seed")) {
+                    // 种子类型
+                    int seedQty = (item == Items.PUMPKIN_SEEDS || item == Items.MELON_SEEDS)
+                        ? 2 + random.nextInt(5) : 4 + random.nextInt(9);
+                    result = new ItemStack(item, seedQty);
+                    cost = new ItemCost(Items.EMERALD, 1 + random.nextInt(3));
+                } else {
+                    // 树苗
+                    result = new ItemStack(item, 2 + random.nextInt(5));
+                    cost = new ItemCost(Items.EMERALD, 1 + random.nextInt(2));
+                }
+
+                MerchantOffer offer = new MerchantOffer(cost, result,
+                    2 + random.nextInt(7), 2 + random.nextInt(13), 0.05f);
+                trader.getOffers().add(offer);
+            }
+        }
+
+        private static void shuffleArray(Item[] arr, Random random) {
+            for (int i = arr.length - 1; i > 0; i--) {
+                int j = random.nextInt(i + 1);
+                Item tmp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = tmp;
             }
         }
 
