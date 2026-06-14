@@ -296,7 +296,7 @@ src/main/java/com/pfws/worldrandomevents/
 ### v1.0.2 (2026-06-15)
 
 **远征商队 全面修复：**
-- 🐛 **事件结束后实体泄漏**：新增 `forceCleanupRemainingEntities()` 二次扫描清理，扫描 80 格范围强制移除所有残留商队实体
+- 🐛 **事件结束逻辑重写**：移除商人死亡提前结束事件的逻辑；事件仅由自然计时结束或管理员 `/worldevents stop` 指令结束；`onEnd()` 改为全维度 `getAllEntities()` 扫描，确保所有远征商人/守卫被彻底清空（解决守卫追杀玩家跑远后局部扫描遗漏的问题）
 - 🐛 **生物生成在地底**：`findSurface()` 和 `isSpawnSafe()` 增加 `canSeeSky()` 天空检测，确保生物只生成在露天位置；搜索尝试次数从 15 提升到 30
 - 🐛 **守卫仇恨逻辑优化**：改为血量变化触发 — 商人受伤时自动寻找 60 格内最近玩家建立永久仇恨，替代旧的 `getLastHurtByMob` + `hurtTime` 逻辑
 - 🐛 **远程守卫误伤近战守卫**：`SnowballMixin` 增加友方检测，雪球击中商队守卫/商人时跳过伤害

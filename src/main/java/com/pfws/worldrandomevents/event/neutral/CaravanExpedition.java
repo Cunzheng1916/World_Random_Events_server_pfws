@@ -83,47 +83,42 @@ public class CaravanExpedition extends BaseEvent {
 
     @Override
     protected void onTick(List<ServerPlayer> players) {
-        Iterator<CaravanGroup> iter = groups.iterator();
-        while (iter.hasNext()) {
-            CaravanGroup group = iter.next();
+        // 仅维护守卫 AI，不再因商人死亡而提前结束事件
+        // 事件只由自然计时结束或管理员指令结束
+        for (CaravanGroup group : groups) {
             group.tick(level);
-            if (group.allTradersDead()) {
-                group.cleanup(level);
-                iter.remove();
-            }
-        }
-        if (groups.isEmpty()) {
-            remainingTicks = 0;
         }
     }
 
     @Override
     protected void onEnd(List<ServerPlayer> players) {
+        // 先清理 groups 追踪列表中的实体
         for (CaravanGroup group : groups) {
             group.cleanup(level);
         }
         groups.clear();
 
-        // 二次清理：扫描残留的商队实体并强制移除
-        forceCleanupRemainingEntities();
+        // 全维度扫描，强制清空所有远征商人/守卫实体
+        // 解决守卫追玩家跑远后局部扫描遗漏的问题
+        cleanupAllCaravanEntities();
 
         eventCenter = null;
         ACTIVE_INSTANCE = null;
     }
 
-    /** 事件结束后扫描并清理所有残留的商队实体 */
-    private void forceCleanupRemainingEntities() {
-        if (eventCenter == null) return;
-        AABB scanArea = new AABB(
-            eventCenter.getX() - 80, level.getMinY(), eventCenter.getZ() - 80,
-            eventCenter.getX() + 80, level.getMaxY(), eventCenter.getZ() + 80);
-
-        for (Entity entity : level.getEntitiesOfClass(Entity.class, scanArea)) {
+    /** 全维度扫描并清空所有远征商队实体（商人+近战守卫+远程守卫） */
+    private void cleanupAllCaravanEntities() {
+        int removed = 0;
+        for (Entity entity : level.getAllEntities()) {
             String name = entity.getCustomName() != null ? entity.getCustomName().getString() : "";
             if (name.contains("远征商人") || name.contains("远征守卫")) {
                 entity.discard();
-                WorldRandomEvents.LOGGER.info("[CaravanExpedition] Force-cleaned residual entity: {}", name);
+                removed++;
             }
+        }
+        if (removed > 0) {
+            WorldRandomEvents.LOGGER.info(
+                "[CaravanExpedition] Full-dimension cleanup: removed {} residual caravan entities", removed);
         }
     }
 
