@@ -1,5 +1,6 @@
 package com.pfws.worldrandomevents.event.neutral;
 
+import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -102,8 +103,28 @@ public class CaravanExpedition extends BaseEvent {
             group.cleanup(level);
         }
         groups.clear();
+
+        // 二次清理：扫描残留的商队实体并强制移除
+        forceCleanupRemainingEntities();
+
         eventCenter = null;
         ACTIVE_INSTANCE = null;
+    }
+
+    /** 事件结束后扫描并清理所有残留的商队实体 */
+    private void forceCleanupRemainingEntities() {
+        if (eventCenter == null) return;
+        AABB scanArea = new AABB(
+            eventCenter.getX() - 80, level.getMinY(), eventCenter.getZ() - 80,
+            eventCenter.getX() + 80, level.getMaxY(), eventCenter.getZ() + 80);
+
+        for (Entity entity : level.getEntitiesOfClass(Entity.class, scanArea)) {
+            String name = entity.getCustomName() != null ? entity.getCustomName().getString() : "";
+            if (name.contains("远征商人") || name.contains("远征守卫")) {
+                entity.discard();
+                WorldRandomEvents.LOGGER.info("[CaravanExpedition] Force-cleaned residual entity: {}", name);
+            }
+        }
     }
 
     public boolean isCaravanGuard(Entity entity) {
@@ -141,7 +162,7 @@ public class CaravanExpedition extends BaseEvent {
 
     private static BlockPos findRandomSafeSurface(ServerLevel level, double cx, double cz,
                                                    int radius, Random random) {
-        for (int attempt = 0; attempt < 15; attempt++) {
+        for (int attempt = 0; attempt < 30; attempt++) {
             double angle = random.nextDouble() * Math.PI * 2;
             double dist = random.nextDouble() * radius;
             int x = (int) (cx + Math.cos(angle) * dist);
@@ -156,20 +177,22 @@ public class CaravanExpedition extends BaseEvent {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState ground = level.getBlockState(pos);
-            // 地面必须是固体方块，不能是液体、树叶、原木
+            // 地面必须是固体方块，不能是液体、树叶、原木，且上方必须能看见天空
             if (ground.isFaceSturdy(level, pos, Direction.UP)
                 && ground.getFluidState().isEmpty()
                 && !isTreeBlock(ground)
-                && level.isEmptyBlock(pos.above())) {
+                && level.isEmptyBlock(pos.above())
+                && level.canSeeSky(pos.above())) {
                 return pos.above();
             }
         }
         return null;
     }
 
-    /** 检查生成位置是否安全：脚部+头部都是空气 */
+    /** 检查生成位置是否安全：脚部+头部都是空气且上方是天空 */
     private static boolean isSpawnSafe(ServerLevel level, BlockPos pos) {
-        return level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above());
+        return level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())
+            && level.canSeeSky(pos);
     }
 
     /** 排除树干和树叶 */
@@ -184,6 +207,7 @@ public class CaravanExpedition extends BaseEvent {
         final List<IronGolem> meleeGuards = new ArrayList<>();
         final List<SnowGolem> rangedGuards = new ArrayList<>();
         Player permanentAggroTarget = null;
+        final Map<WanderingTrader, Float> lastTraderHealth = new HashMap<>();
 
         CaravanGroup(BlockPos center) { this.center = center; }
 
@@ -262,6 +286,25 @@ public class CaravanExpedition extends BaseEvent {
 
             Vec3 centerVec = Vec3.atCenterOf(center);
 
+            // 血量变化检测：商人受伤时，找到最近玩家建立永久仇恨
+            if (permanentAggroTarget == null) {
+                for (WanderingTrader trader : aliveTraders) {
+                    float currentHealth = trader.getHealth();
+                    Float lastHealth = lastTraderHealth.get(trader);
+                    if (lastHealth != null && currentHealth < lastHealth) {
+                        Player nearest = findNearestPlayer(level, trader, 60);
+                        if (nearest != null) {
+                            setPermanentAggro(nearest);
+                            WorldRandomEvents.LOGGER.info(
+                                "[CaravanExpedition] Trader damaged! Nearest player: {}",
+                                nearest.getName().getString());
+                            break;
+                        }
+                    }
+                    lastTraderHealth.put(trader, currentHealth);
+                }
+            }
+
             for (WanderingTrader trader : aliveTraders) {
                 if (trader.distanceToSqr(centerVec) > 400) {
                     trader.teleportTo(center.getX() + 0.5, center.getY(), center.getZ() + 0.5);
@@ -269,14 +312,6 @@ public class CaravanExpedition extends BaseEvent {
                         false, true, true));
                     trader.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, 200, 1,
                         false, true, true));
-                }
-
-                if (permanentAggroTarget == null && !trader.isAlive()) continue;
-                if (permanentAggroTarget == null) {
-                    LivingEntity attacker = trader.getLastHurtByMob();
-                    if (attacker instanceof Player player && trader.hurtTime > 0) {
-                        setPermanentAggro(player);
-                    }
                 }
             }
 
@@ -313,6 +348,21 @@ public class CaravanExpedition extends BaseEvent {
 
         boolean allTradersDead() {
             return traders.stream().noneMatch(LivingEntity::isAlive);
+        }
+
+        /** 找到距离给定实体最近的玩家（在指定格数内） */
+        private static Player findNearestPlayer(ServerLevel level, Entity entity, int rangeBlocks) {
+            double rangeSq = rangeBlocks * rangeBlocks;
+            Player nearest = null;
+            double nearestDistSq = rangeSq;
+            for (Player player : level.players()) {
+                double distSq = entity.distanceToSqr(player);
+                if (distSq < nearestDistSq) {
+                    nearestDistSq = distSq;
+                    nearest = player;
+                }
+            }
+            return nearest;
         }
 
         void cleanup(ServerLevel level) {

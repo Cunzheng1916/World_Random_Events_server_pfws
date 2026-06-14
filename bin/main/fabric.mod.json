@@ -1,0 +1,26 @@
+{
+    "schemaVersion": 1,
+    "id": "world-random-events",
+    "version": "${version}",
+    "name": "World Random Events",
+    "description": "A server-side Fabric mod adding random world events to Minecraft 26.1.1 overworld. Includes disasters, blessings, and neutral events.",
+    "authors": ["pfws"],
+    "contact": {
+        "homepage": "",
+        "sources": ""
+    },
+    "license": "MIT",
+    "environment": "server",
+    "entrypoints": {
+        "main": ["com.pfws.worldrandomevents.WorldRandomEvents"]
+    },
+    "mixins": [
+        "world-random-events.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=0.19.3",
+        "minecraft": "~26.1.1",
+        "java": ">=25",
+        "fabric-api": "*"
+    }
+}

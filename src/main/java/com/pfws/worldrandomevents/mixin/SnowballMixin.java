@@ -27,6 +27,11 @@ public abstract class SnowballMixin {
             Entity owner = self.getOwner();
             if (owner instanceof SnowGolem && caravan.isCaravanGuard(owner)) {
                 Entity target = hitResult.getEntity();
+                // 跳过友方单位（守卫或商人），避免远程守卫误伤近战守卫
+                if (caravan.isCaravanGuard(target) || caravan.isCaravanTrader(target)) {
+                    ci.cancel();
+                    return;
+                }
                 if (target instanceof LivingEntity livingTarget) {
                     livingTarget.hurtServer((ServerLevel) self.level(),
                         self.damageSources().thrown(self, owner), 4.0f);
