@@ -1,22 +1,22 @@
 {
     "mob.chicken.kunkun.say": {
         "sounds": [
-            "world-random-events:mob/chicken/say1",
-            "world-random-events:mob/chicken/say2",
-            "world-random-events:mob/chicken/say3"
+            "world-random-events:mob/chicken_kun/say1",
+            "world-random-events:mob/chicken_kun/say2",
+            "world-random-events:mob/chicken_kun/say3"
         ],
         "subtitle": "坤坤叫声"
     },
     "mob.chicken.kunkun.hurt": {
         "sounds": [
-            "world-random-events:mob/chicken/hurt1",
-            "world-random-events:mob/chicken/hurt2"
+            "world-random-events:mob/chicken_kun/hurt1",
+            "world-random-events:mob/chicken_kun/hurt2"
         ],
         "subtitle": "坤坤受伤"
     },
     "mob.chicken.kunkun.plop": {
         "sounds": [
-            "world-random-events:mob/chicken/plop"
+            "world-random-events:mob/chicken_kun/plop"
         ],
         "subtitle": "坤坤扇翅膀"
     }
