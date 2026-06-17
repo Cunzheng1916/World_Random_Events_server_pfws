@@ -31,8 +31,7 @@
 |------|-----|---------|---------|---------|------|---------|
 | **血月** Blood Moon | `blood_moon` | 31 天 | 100% | 1 夜 (~13000t) | 31 天 | 31 天 |
 | **猪灵入侵** Piglin Invasion | `piglin_invasion` | 3 天 | 30% | 12 天 | 3 天 | 45 天 |
-| **灵魂风暴** Soul Storm | `soul_storm` | 8 天 | 25% | 3 天 | 8 天 | 40 天 |
-| **地脉紊乱** Leyline Disturbance | `leyline_disturbance` | 7 天 | 20% | 2 天 | 7 天 | 35 天 |
+| **天降咸鱼** Fish Rain | `fish_rain` | 5 天 | 25% | 2 分钟 | 5 天 | 30 天 |
 
 #### 🩸 血月 (Blood Moon)
 - 天空变为血红色
@@ -44,20 +43,10 @@
 - 玩家周期性获得 **凋零** 和 **虚弱** 效果
 - 事件结束后玩家残留虚弱效果 2 天
 
-#### 👻 灵魂风暴 (Soul Storm)
-- 天空变为暗绿色
-- 亡灵怪物获得 **速度 I** + **力量 I** 强化
-- 低血量玩家（<5❤）会被 **漂浮** 并受到魔法伤害
-- **玩家死亡时**：在死亡位置生成「灵魂牢笼」（灵魂沙 + 铁栏杆结构）
-- **解救灵魂**：手持火把右键牢笼上方铁栏杆 → 获得 **生命恢复 II**（60秒）+ 10 经验
-
-#### 💎 地脉紊乱 (Leyline Disturbance)
-- 天空变为紫色，玩家屏幕周期性震动
-- 在玩家周围生成 3~6 个「地脉节点」（紫水晶块）
-- 靠近未稳定节点 → 随机获得 **虚弱/挖掘疲劳/饥饿/中毒** 之一
-- 靠近已稳定节点 → 获得 **幸运** 效果
-- **稳定节点**：手持 8 个紫水晶碎片右键节点
-- 全部稳定后事件提前结束，全体玩家获得 **幸运 III**（30 分钟）
+#### � 天降咸鱼 (Fish Rain)
+- 天空变为深蓝色
+- 每秒在玩家周围 **50 格范围**内随机掉落 **3~5 条**鱼类物品
+- 掉落鱼种：生鳕鱼、生鲑鱼、热带鱼、河豚、熟鳕鱼、熟鲑鱼
 
 ---
 
@@ -80,8 +69,9 @@
 #### 🌾 丰收祭典 (Harvest Festival)
 - 全体玩家获得 **幸运 II** + **生命恢复 I**
 - 生成丰收祭坛和丰收精灵
-- 每 30 秒自动收割玩家周围 32 格内成熟作物并重新种植
-- 每 10 秒刷新玩家生命恢复
+- 每 **30 秒**自动收割玩家周围 32 格内成熟作物并重新种植
+- 每 **10 秒**刷新玩家生命恢复效果
+- 每 **10 秒**对周围农作物随机使用 **1~3 次骨粉**加速生长
 - 事件结束时，根据玩家附近作物数量奖励经验（每株 5 点）
 
 ---
@@ -91,33 +81,12 @@
 | 事件 | ID | 触发间隔 | 触发概率 | 持续时间 | 冷却 | 强制触发 |
 |------|-----|---------|---------|---------|------|---------|
 | **远征商队** Caravan Expedition | `caravan_expedition` | 6 天 | 40% | 2~5 天 | 6 天 | 60 天 |
-| **流浪铁匠** Wandering Blacksmith | `wandering_blacksmith` | 10 天 | 30% | 4 天 | 10 天 | 50 天 |
-| **神秘方尖碑** Mysterious Obelisk | `mysterious_obelisk` | 15 天 | 25% | 永久（直到互动） | 15 天 | — |
 
 #### 🐪 远征商队 (Caravan Expedition)
 - 生成 5~7 个「远征商人」（发光流浪商人 + 缓慢 II + 生命恢复 II）
 - 2~4 个近战守卫（铁傀儡，速度 III + 力量 V + 400HP）
 - 4~6 个远程守卫（雪傀儡，力量 VI）
 - 商队会保持在生成位置附近活动
-
-#### ⚒️ 流浪铁匠 (Wandering Blacksmith)
-- 搭建铁匠营地（高炉 + 锻造台 + 破损铁砧 + 灯笼）
-- 生成「流浪铁匠」村民、驮箱骆驼、铁匠卫士
-- 持续 4 天后自动拆除
-
-#### 🗿 神秘方尖碑 (Mysterious Obelisk)
-- 生成黑石/紫珀柱/末地烛方尖碑结构
-- 手持特定物品右键方尖碑激活不同状态：
-
-| 供品 | 激活状态 | 光环效果 |
-|------|---------|---------|
-| 下界之星 | 知识 (KNOWLEDGE) | 幸运 |
-| 幽匿催发体 | 寂静 (SILENCE) | 夜视 |
-| 下界合金锭 | 战斗 (COMBAT) | 力量 |
-| 附魔金苹果 | 生命 (LIFE) | 生命恢复 |
-
-- 同一时间世界只能存在一座方尖碑
-- 效果范围：64 格
 
 ---
 
@@ -134,17 +103,13 @@
 | `/worldevents reset <id>` | 重置指定事件的冷却时间 |
 | `/worldevents reload` | 重新加载配置文件 |
 
-事件 ID 参考：`blood_moon`, `piglin_invasion`, `soul_storm`, `leyline_disturbance`, `meteor_shower`, `harvest_festival`, `caravan_expedition`, `wandering_blacksmith`, `mysterious_obelisk`
+事件 ID 参考：`blood_moon`, `piglin_invasion`, `fish_rain`, `meteor_shower`, `harvest_festival`, `caravan_expedition`
 
 ---
 
 ## 🖐 玩家交互
 
-| 事件 | 交互方式 | 效果 |
-|------|---------|------|
-| 地脉紊乱 | 手持 **8 个紫水晶碎片** 右键节点 | 稳定节点 → 幸运光环 |
-| 灵魂风暴 | 手持 **火把** 右键灵魂牢笼上方铁栏杆 | 释放灵魂 → 生命恢复 II + 10 经验 |
-| 神秘方尖碑 | 手持供品右键方尖碑基座 | 激活方尖碑 → 对应光环 |
+当前版本暂无特殊玩家交互事件。
 
 ---
 
@@ -159,15 +124,12 @@
   "global_enabled": true,
   "structure_mode": "BUILTIN",
   "events": {
-    "blood_moon":           { "enabled": true, "type": "DISASTER" },
-    "piglin_invasion":      { "enabled": true, "type": "DISASTER" },
-    "soul_storm":           { "enabled": true, "type": "DISASTER" },
-    "leyline_disturbance":  { "enabled": true, "type": "DISASTER" },
-    "meteor_shower":        { "enabled": true, "type": "BLESSING" },
-    "harvest_festival":     { "enabled": true, "type": "BLESSING" },
-    "caravan_expedition":   { "enabled": true, "type": "NEUTRAL" },
-    "wandering_blacksmith": { "enabled": true, "type": "NEUTRAL" },
-    "mysterious_obelisk":   { "enabled": true, "type": "NEUTRAL" }
+    "blood_moon":         { "enabled": true, "type": "DISASTER" },
+    "piglin_invasion":    { "enabled": true, "type": "DISASTER" },
+    "fish_rain":          { "enabled": true, "type": "DISASTER" },
+    "meteor_shower":      { "enabled": true, "type": "BLESSING" },
+    "harvest_festival":   { "enabled": true, "type": "BLESSING" },
+    "caravan_expedition": { "enabled": true, "type": "NEUTRAL" }
   }
 }
 ```
@@ -269,15 +231,12 @@ src/main/java/com/pfws/worldrandomevents/
 │   ├── disaster/
 │   │   ├── BloodMoon.java          # 血月
 │   │   ├── PiglinInvasion.java     # 猪灵入侵
-│   │   ├── SoulStorm.java          # 灵魂风暴
-│   │   └── LeylineDisturbance.java # 地脉紊乱
+│   │   └── FishRain.java           # 天降咸鱼
 │   ├── blessing/
 │   │   ├── MeteorShower.java       # 流星雨
 │   │   └── HarvestFestival.java    # 丰收祭典
 │   └── neutral/
-│       ├── CaravanExpedition.java  # 远征商队
-│       ├── WanderingBlacksmith.java # 流浪铁匠
-│       └── MysteriousObelisk.java  # 神秘方尖碑
+│       └── CaravanExpedition.java  # 远征商队
 ├── mixin/
 │   ├── CaravanGuardAiMixin.java    # 商队守卫AI控制
 │   ├── LivingEntityMixin.java      # 生物死亡掉落增强
@@ -320,14 +279,19 @@ src/main/java/com/pfws/worldrandomevents/
 - 🐛 **神秘方尖碑**: 修复方尖碑立刻崩为掉落物的 bug（由上述 BaseEvent 修复解决）；新增地表查找失败时的安全退出机制
 - 🐛 **猪灵入侵**: 修复猪灵全部死亡后事件不结束的 bug（`isAllDead()` 逻辑漏洞）；修复 `onEnd()` 中虚弱效果无法被移除的 bug；修复护甲掉落率设为 0% 导致不掉奖励的 bug
 - 🐛 **猪灵入侵**: 新增入侵生物死亡掉落（金块 3~8、钻石 2~5、经验瓶 10~20、8% 远古残骸）
-- 🐛 **灵魂风暴**: 修复 `onEnd()` 中无限虚弱效果不清理的 bug
 - 🐛 **远征商队**: 修复商人全部死亡后守卫实体泄漏且事件不结束的 bug
 
 **功能完善：**
-- ✨ 所有有坐标的事件（猪灵入侵、灵魂风暴、地脉紊乱、神秘方尖碑、流浪铁匠、丰收祭典、远征商队）现在均会在开始/结束时广播事件坐标
-- ✨ 为地脉节点、灵魂牢笼、方尖碑添加了发光标记（ArmorStand），提升玩家发现体验
-- ✨ 流浪铁匠营地的村民、骆驼、铁傀儡添加了发光效果
+- ✨ 所有有坐标的事件（猪灵入侵、丰收祭典、远征商队）现在均会在开始/结束时广播事件坐标
 - ✨ 远征商队守卫死亡时掉落丰厚奖励（钻石、铁块、经验瓶、远古残骸）
+
+### v1.0.5 (2026-06-18)
+
+**事件调整：**
+- 🔥 **移除事件**：删除灵魂风暴、地脉紊乱、流浪铁匠、神秘方尖碑、坤坤入侵（共 5 个事件）
+- 🆕 **新增事件**：天降咸鱼 — 每秒钟在玩家周围随机掉落 3~5 条鱼类物品
+- 🌾 **丰收祭典增强**：新增骨粉加速农作物生长效果（每 10 秒对周围作物使用 1~3 次骨粉）
+- 📦 **移除资源包**：删除坤坤资源包（音效/纹理），不再需要客户端资源包
 
 ---
 

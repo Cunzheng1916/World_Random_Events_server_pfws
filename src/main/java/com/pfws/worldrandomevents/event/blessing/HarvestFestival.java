@@ -54,6 +54,13 @@ public class HarvestFestival extends BaseEvent {
             }
         }
 
+        // 每10秒对附近农作物使用1~3次骨粉加速生长
+        if (tickCounter % 200 == 0) {
+            for (ServerPlayer player : players) {
+                bonemealCrops(player);
+            }
+        }
+
         if (tickCounter % 200 == 0) {
             for (ServerPlayer player : players) {
                 player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 0, false, true, true));
@@ -84,6 +91,29 @@ public class HarvestFestival extends BaseEvent {
                 if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
                     level.destroyBlock(pos, true, player);
                     level.setBlock(pos, state.getBlock().defaultBlockState(), 3);
+                }
+            }
+        }
+    }
+
+    private void bonemealCrops(ServerPlayer player) {
+        Random rand = new Random();
+        int radius = 16;
+        int maxAttempts = 20;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            int dx = rand.nextInt(radius * 2 + 1) - radius;
+            int dz = rand.nextInt(radius * 2 + 1) - radius;
+            BlockPos pos = player.blockPosition().offset(dx, 0, dz);
+            BlockState state = level.getBlockState(pos);
+            if (state.getBlock() instanceof CropBlock crop && !crop.isMaxAge(state)) {
+                int times = 1 + rand.nextInt(3);
+                for (int i = 0; i < times; i++) {
+                    BlockState current = level.getBlockState(pos);
+                    if (current.getBlock() instanceof CropBlock c && !c.isMaxAge(current)) {
+                        c.performBonemeal(level, level.getRandom(), pos, current);
+                    } else {
+                        break;
+                    }
                 }
             }
         }

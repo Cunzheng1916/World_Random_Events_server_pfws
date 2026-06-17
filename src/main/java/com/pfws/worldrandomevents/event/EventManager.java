@@ -5,7 +5,6 @@ import com.pfws.worldrandomevents.event.blessing.HarvestFestival;
 import com.pfws.worldrandomevents.event.blessing.MeteorShower;
 import com.pfws.worldrandomevents.event.disaster.BloodMoon;
 import com.pfws.worldrandomevents.event.disaster.FishRain;
-import com.pfws.worldrandomevents.event.disaster.KunKunInvasion;
 import com.pfws.worldrandomevents.event.disaster.PiglinInvasion;
 import com.pfws.worldrandomevents.event.neutral.CaravanExpedition;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -33,7 +32,6 @@ public class EventManager {
     public void registerAllEvents() {
         register(new BloodMoon());
         register(new PiglinInvasion());
-        register(new KunKunInvasion());
         register(new FishRain());
         register(new MeteorShower());
         register(new HarvestFestival());

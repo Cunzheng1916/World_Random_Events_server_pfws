@@ -4,6 +4,7 @@ import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.network.NetworkHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

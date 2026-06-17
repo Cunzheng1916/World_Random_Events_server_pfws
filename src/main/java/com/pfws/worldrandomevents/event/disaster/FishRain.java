@@ -15,14 +15,21 @@ import java.util.*;
 
 public class FishRain extends BaseEvent {
     private int tickCounter = 0;
-    private static final List<ItemStack> FISH_POOL = List.of(
-        new ItemStack(Items.COD),
-        new ItemStack(Items.SALMON),
-        new ItemStack(Items.TROPICAL_FISH),
-        new ItemStack(Items.PUFFERFISH),
-        new ItemStack(Items.COOKED_COD),
-        new ItemStack(Items.COOKED_SALMON)
-    );
+    private static List<ItemStack> FISH_POOL = null;
+
+    private static List<ItemStack> getFishPool() {
+        if (FISH_POOL == null) {
+            FISH_POOL = List.of(
+                new ItemStack(Items.COD),
+                new ItemStack(Items.SALMON),
+                new ItemStack(Items.TROPICAL_FISH),
+                new ItemStack(Items.PUFFERFISH),
+                new ItemStack(Items.COOKED_COD),
+                new ItemStack(Items.COOKED_SALMON)
+            );
+        }
+        return FISH_POOL;
+    }
 
     public FishRain() {
         super("fish_rain", "天降咸鱼", EventType.DISASTER);
@@ -84,7 +91,7 @@ public class FishRain extends BaseEvent {
         double spawnY = surface.getY() + 10 + random.nextDouble() * 10;
         BlockPos spawnPos = new BlockPos((int) x, (int) spawnY, (int) z);
 
-        ItemStack fish = FISH_POOL.get(random.nextInt(FISH_POOL.size())).copy();
+        ItemStack fish = getFishPool().get(random.nextInt(getFishPool().size())).copy();
         ItemEntity itemEntity = new ItemEntity(level, x, spawnY, z, fish);
         itemEntity.setDefaultPickUpDelay();
         level.addFreshEntity(itemEntity);

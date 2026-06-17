@@ -29,7 +29,6 @@ public class ModConfig {
     public ModConfig() {
         events.put("blood_moon", new EventConfig(true, EventConfig.EventType.DISASTER));
         events.put("piglin_invasion", new EventConfig(true, EventConfig.EventType.DISASTER));
-        events.put("kunkun_invasion", new EventConfig(true, EventConfig.EventType.DISASTER));
         events.put("fish_rain", new EventConfig(true, EventConfig.EventType.DISASTER));
         events.put("meteor_shower", new EventConfig(true, EventConfig.EventType.BLESSING));
         events.put("harvest_festival", new EventConfig(true, EventConfig.EventType.BLESSING));
