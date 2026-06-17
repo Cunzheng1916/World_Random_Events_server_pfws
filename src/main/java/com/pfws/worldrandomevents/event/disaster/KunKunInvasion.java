@@ -44,14 +44,24 @@ public class KunKunInvasion extends BaseEvent {
     protected void onTick(List<ServerPlayer> players) {
         tickCounter++;
 
-        // 每5秒播放一次坤坤叫声给附近玩家
+        // 每5秒给附近玩家播放随机坤坤音效
         if (tickCounter % 100 == 0) {
+            Random rand = new Random();
             for (ServerPlayer player : players) {
-                // 找到距离玩家最近的坤坤
                 LivingEntity nearest = findNearestChicken(player);
                 if (nearest != null && player.distanceToSqr(nearest) < 10000) {
+                    // 随机选择音效类型：say 65%, hurt 15%, plop 20%
+                    float roll = rand.nextFloat();
+                    String soundId;
+                    if (roll < 0.65f) {
+                        soundId = "world-random-events:mob.chicken.kunkun.say";
+                    } else if (roll < 0.80f) {
+                        soundId = "world-random-events:mob.chicken.kunkun.hurt";
+                    } else {
+                        soundId = "world-random-events:mob.chicken.kunkun.plop";
+                    }
                     NetworkHandler.sendSoundEffect(player,
-                        "world-random-events:mob.chicken.kunkun",
+                        soundId,
                         nearest.getX(), nearest.getY(), nearest.getZ(),
                         1.0f, 1.0f);
                 }
