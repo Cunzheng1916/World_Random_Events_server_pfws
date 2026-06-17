@@ -1,7 +1,12 @@
 {
     "mob.chicken.kunkun": {
         "sounds": [
-            "world-random-events:mob/chicken/kunkun"
+            "world-random-events:mob/chicken/say1",
+            "world-random-events:mob/chicken/say2",
+            "world-random-events:mob/chicken/say3",
+            "world-random-events:mob/chicken/hurt1",
+            "world-random-events:mob/chicken/hurt2",
+            "world-random-events:mob/chicken/plop"
         ],
         "subtitle": "坤坤叫声"
     }
