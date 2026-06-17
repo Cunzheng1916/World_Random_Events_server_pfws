@@ -3,7 +3,6 @@ package com.pfws.worldrandomevents.mixin;
 import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.event.disaster.BloodMoon;
-import com.pfws.worldrandomevents.event.disaster.SoulStorm;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
@@ -32,11 +31,5 @@ public class ServerLevelMixin {
                 net.minecraft.world.effect.MobEffects.RESISTANCE, -1, 0, false, true, true));
         }
 
-        if (current instanceof SoulStorm && current.isActive() && entity instanceof Mob mob) {
-            mob.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.SPEED, 200, 0, false, true, true));
-            mob.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.STRENGTH, 200, 0, false, true, true));
-        }
     }
 }

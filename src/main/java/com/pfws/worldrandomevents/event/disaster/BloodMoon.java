@@ -36,6 +36,13 @@ public class BloodMoon extends BaseEvent {
 
     @Override
     protected void onTick(List<ServerPlayer> players) {
+        // 只在夜晚和傍晚显示BossBar，白日隐藏
+        if (bossBar != null) {
+            long dayTime = level.getOverworldClockTime() % 24000;
+            boolean isDarkTime = dayTime >= 12000;
+            bossBar.setVisible(isDarkTime);
+        }
+
         if (ticksSinceStart % 100 == 0) {
             level.getAllEntities().forEach(entity -> {
                 if (entity instanceof Monster monster && !monster.hasEffect(MobEffects.STRENGTH)) {

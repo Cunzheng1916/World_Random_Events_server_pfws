@@ -29,13 +29,11 @@ public class ModConfig {
     public ModConfig() {
         events.put("blood_moon", new EventConfig(true, EventConfig.EventType.DISASTER));
         events.put("piglin_invasion", new EventConfig(true, EventConfig.EventType.DISASTER));
-        events.put("soul_storm", new EventConfig(true, EventConfig.EventType.DISASTER));
-        events.put("leyline_disturbance", new EventConfig(true, EventConfig.EventType.DISASTER));
+        events.put("kunkun_invasion", new EventConfig(true, EventConfig.EventType.DISASTER));
+        events.put("fish_rain", new EventConfig(true, EventConfig.EventType.DISASTER));
         events.put("meteor_shower", new EventConfig(true, EventConfig.EventType.BLESSING));
         events.put("harvest_festival", new EventConfig(true, EventConfig.EventType.BLESSING));
         events.put("caravan_expedition", new EventConfig(true, EventConfig.EventType.NEUTRAL));
-        events.put("wandering_blacksmith", new EventConfig(true, EventConfig.EventType.NEUTRAL));
-        events.put("mysterious_obelisk", new EventConfig(true, EventConfig.EventType.NEUTRAL));
     }
 
     public static ModConfig load() {

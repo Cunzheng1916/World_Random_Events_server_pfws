@@ -4,12 +4,10 @@ import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.event.blessing.HarvestFestival;
 import com.pfws.worldrandomevents.event.blessing.MeteorShower;
 import com.pfws.worldrandomevents.event.disaster.BloodMoon;
-import com.pfws.worldrandomevents.event.disaster.LeylineDisturbance;
+import com.pfws.worldrandomevents.event.disaster.FishRain;
+import com.pfws.worldrandomevents.event.disaster.KunKunInvasion;
 import com.pfws.worldrandomevents.event.disaster.PiglinInvasion;
-import com.pfws.worldrandomevents.event.disaster.SoulStorm;
 import com.pfws.worldrandomevents.event.neutral.CaravanExpedition;
-import com.pfws.worldrandomevents.event.neutral.MysteriousObelisk;
-import com.pfws.worldrandomevents.event.neutral.WanderingBlacksmith;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
@@ -35,13 +33,11 @@ public class EventManager {
     public void registerAllEvents() {
         register(new BloodMoon());
         register(new PiglinInvasion());
-        register(new SoulStorm());
-        register(new LeylineDisturbance());
+        register(new KunKunInvasion());
+        register(new FishRain());
         register(new MeteorShower());
         register(new HarvestFestival());
         register(new CaravanExpedition());
-        register(new WanderingBlacksmith());
-        register(new MysteriousObelisk());
 
         ServerLifecycleEvents.SERVER_STARTING.register(s -> server = s);
         ServerTickEvents.END_SERVER_TICK.register(this::onServerTick);

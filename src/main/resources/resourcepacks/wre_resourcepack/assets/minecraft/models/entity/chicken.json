@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:entity/chicken",
+    "textures": {
+        "all": "world-random-events:textures/entity/chicken/kunkun"
+    }
+}

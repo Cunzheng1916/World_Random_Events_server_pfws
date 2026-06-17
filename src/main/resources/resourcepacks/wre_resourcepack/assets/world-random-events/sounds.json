@@ -1,0 +1,8 @@
+{
+    "mob.chicken.kunkun": {
+        "sounds": [
+            "world-random-events:mob/chicken/kunkun"
+        ],
+        "subtitle": "坤坤叫声"
+    }
+}

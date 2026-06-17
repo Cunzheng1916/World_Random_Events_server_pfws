@@ -4,7 +4,6 @@ import com.pfws.worldrandomevents.WorldRandomEvents;
 import com.pfws.worldrandomevents.event.BaseEvent;
 import com.pfws.worldrandomevents.event.disaster.BloodMoon;
 import com.pfws.worldrandomevents.event.disaster.PiglinInvasion;
-import com.pfws.worldrandomevents.event.disaster.SoulStorm;
 import com.pfws.worldrandomevents.event.neutral.CaravanExpedition;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -144,10 +143,7 @@ public abstract class LivingEntityMixin {
         ServerLevel level = (ServerLevel) self.level();
         BaseEvent current = WorldRandomEvents.EVENT_MANAGER.getCurrentEvent();
 
-        if (current instanceof SoulStorm storm && storm.isActive()) {
-            storm.createSoulCage(player.blockPosition(), player);
         }
-    }
 
     private static void spawnDrop(ServerLevel level, LivingEntity entity, ItemStack stack) {
         ItemEntity drop = new ItemEntity(level,

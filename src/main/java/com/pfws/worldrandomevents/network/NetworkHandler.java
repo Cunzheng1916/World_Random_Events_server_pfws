@@ -19,6 +19,7 @@ public class NetworkHandler {
         PayloadTypeRegistry.clientboundPlay().register(ScreenShakePayload.TYPE, ScreenShakePayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ParticleEffectPayload.TYPE, ParticleEffectPayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TitleMessagePayload.TYPE, TitleMessagePayload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SoundEffectPayload.TYPE, SoundEffectPayload.STREAM_CODEC);
     }
 
     public static void sendEventStart(ServerPlayer player, String eventId, int durationTicks) {
@@ -43,6 +44,10 @@ public class NetworkHandler {
 
     public static void sendTitleMessage(ServerPlayer player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         ServerPlayNetworking.send(player, new TitleMessagePayload(title, subtitle, fadeIn, stay, fadeOut));
+    }
+
+    public static void sendSoundEffect(ServerPlayer player, String soundId, double x, double y, double z, float volume, float pitch) {
+        ServerPlayNetworking.send(player, new SoundEffectPayload(soundId, x, y, z, volume, pitch));
     }
 
     public record EventStartPayload(String eventId, int durationTicks) implements CustomPacketPayload {
@@ -106,6 +111,20 @@ public class NetworkHandler {
             ByteBufCodecs.VAR_INT, TitleMessagePayload::stay,
             ByteBufCodecs.VAR_INT, TitleMessagePayload::fadeOut,
             TitleMessagePayload::new
+        );
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    public record SoundEffectPayload(String soundId, double x, double y, double z, float volume, float pitch) implements CustomPacketPayload {
+        public static final Type<SoundEffectPayload> TYPE = new Type<>(Identifier.fromNamespaceAndPath(WorldRandomEvents.MOD_ID, "sound_effect"));
+        public static final StreamCodec<FriendlyByteBuf, SoundEffectPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8, SoundEffectPayload::soundId,
+            ByteBufCodecs.DOUBLE, SoundEffectPayload::x,
+            ByteBufCodecs.DOUBLE, SoundEffectPayload::y,
+            ByteBufCodecs.DOUBLE, SoundEffectPayload::z,
+            ByteBufCodecs.FLOAT, SoundEffectPayload::volume,
+            ByteBufCodecs.FLOAT, SoundEffectPayload::pitch,
+            SoundEffectPayload::new
         );
         @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }

@@ -126,38 +126,51 @@ public class PiglinInvasion extends BaseEvent {
         if (players.isEmpty()) return;
         Random random = new Random();
 
-        int targetCount = Math.min(2, players.size());
-        List<ServerPlayer> targets = new ArrayList<>(players);
-        Collections.shuffle(targets, random);
-
-        for (int i = 0; i < targetCount; i++) {
-            ServerPlayer target = targets.get(i);
-            for (int attempt = 0; attempt < 10; attempt++) {
-                double angle = random.nextDouble() * Math.PI * 2;
-                double dist = 30 + random.nextDouble() * 50;
-                int x = (int) (target.getX() + Math.cos(angle) * dist);
-                int z = (int) (target.getZ() + Math.sin(angle) * dist);
-                BlockPos spawnPos = findSurface(x, z);
-                if (spawnPos == null) continue;
-
-                PiglinGroup group = new PiglinGroup(spawnPos);
-                group.spawn(level, random);
-                groups.add(group);
-                break;
-            }
+        // 仿照远征商队：选取一个随机玩家，在其2400格范围内寻找安全地表
+        ServerPlayer target = players.get(random.nextInt(players.size()));
+        BlockPos spawnPos = findRandomSafeSurface(level, target.getX(), target.getZ(), 2400, random);
+        if (spawnPos == null) {
+            spawnPos = findSurface(level, (int) target.getX(), (int) target.getZ());
         }
+        if (spawnPos == null) return;
+
+        PiglinGroup group = new PiglinGroup(spawnPos);
+        group.spawn(level, random);
+        groups.add(group);
     }
 
-    private BlockPos findSurface(int x, int z) {
+    private static BlockPos findRandomSafeSurface(ServerLevel level, double cx, double cz,
+                                                   int radius, Random random) {
+        for (int attempt = 0; attempt < 30; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double dist = random.nextDouble() * radius;
+            int x = (int) (cx + Math.cos(angle) * dist);
+            int z = (int) (cz + Math.sin(angle) * dist);
+            BlockPos pos = findSurface(level, x, z);
+            if (pos != null && isSpawnSafe(level, pos)) return pos;
+        }
+        return null;
+    }
+
+    private static BlockPos findSurface(ServerLevel level, int x, int z) {
         for (int y = level.getMaxY() - 1; y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState ground = level.getBlockState(pos);
-            if (ground.isFaceSturdy(level, pos, Direction.UP) && ground.getFluidState().isEmpty() && level.isEmptyBlock(pos.above())
-                && level.isEmptyBlock(pos.above(2))) {
+            if (ground.isFaceSturdy(level, pos, Direction.UP)
+                && ground.getFluidState().isEmpty()
+                && !ground.is(net.minecraft.tags.BlockTags.LOGS)
+                && !ground.is(net.minecraft.tags.BlockTags.LEAVES)
+                && level.isEmptyBlock(pos.above())
+                && level.canSeeSky(pos.above())) {
                 return pos.above();
             }
         }
         return null;
+    }
+
+    private static boolean isSpawnSafe(ServerLevel level, BlockPos pos) {
+        return level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above())
+            && level.canSeeSky(pos);
     }
 
     public static class PiglinGroup {
